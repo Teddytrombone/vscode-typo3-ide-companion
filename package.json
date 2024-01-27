@@ -2,7 +2,7 @@
   "name": "vscode-typo3-ide-companion",
   "displayName": "vscode-typo3-ide-companion",
   "description": "Connects to the TYPO3 extension ide_companion to use LSP functionality for your project",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "Teddytrombone",
   "engines": {
     "vscode": "^1.85.0"
