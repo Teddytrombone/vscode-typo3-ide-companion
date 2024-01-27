@@ -1,0 +1,113 @@
+{
+  "name": "vscode-typo3-ide-companion",
+  "displayName": "vscode-typo3-ide-companion",
+  "description": "Connects to the TYPO3 extension ide_companion to use LSP functionality for your project",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "vscode",
+    "typo3",
+    "typoscript",
+    "fluid",
+    "extbase"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/typo3/sysext",
+    "workspaceContains:**/typo3_src",
+    "workspaceContains:**/typo3conf/ext",
+    "workspaceContains:**/Resources/Private/Templates",
+    "workspaceContains:**/Resources/Private/Layouts",
+    "workspaceContains:**/Resources/Private/Partials",
+    "workspaceContains:**/Resources/Private/**/Templates",
+    "workspaceContains:**/Resources/Private/**/Layouts",
+    "workspaceContains:**/Resources/Private/**/Partials"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-typo3-ide-companion.reindex",
+        "title": "Re-index workspace",
+        "category": "TYPO3 ide companion"
+      }
+    ],
+    "configuration": {
+      "title": "TYPO3 ide_companion",
+      "properties": {
+        "vscode-typo3-ide-companion.executablePath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "The path to a executable which launches the language server. If empty, the default TYPO3 console command is used"
+        },
+        "vscode-typo3-ide-companion.phpPath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "If the LSP is started via default TYPO3 console commands, this holds the path to the php binary to use. If empty, the default php binary is used."
+        },
+        "vscode-typo3-ide-companion.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to enable the language server"
+        },
+        "vscode-typo3-ide-companion.config": {
+          "type": "object",
+          "default": {},
+          "description": "Specifies the underlying ide_companion configuration."
+        },
+        "vscode-typo3-ide-companion.remote.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Connect to language server via socket instead stdio"
+        },
+        "vscode-typo3-ide-companion.remote.host": {
+          "type": "string",
+          "default": "127.0.0.1",
+          "description": "Host that language server is running"
+        },
+        "vscode-typo3-ide-companion.remote.port": {
+          "type": "integer",
+          "default": 9090,
+          "description": "Port that language server is running"
+        },
+        "vscode-typo3-ide-companion.launchServerArgs": {
+          "type": "array",
+          "default": [],
+          "description": "Arguments passeds to language server. Only applies if language server is running in stdio mode"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^6.1.3"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "@vscode/test-cli": "^0.0.4",
+    "@vscode/test-electron": "^2.3.8"
+  }
+}
