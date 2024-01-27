@@ -18,6 +18,9 @@
     "extbase"
   ],
   "activationEvents": [
+    "workspaceContains:typo3/sysext",
+    "workspaceContains:typo3_src",
+    "workspaceContains:typo3conf/ext",
     "workspaceContains:**/typo3/sysext",
     "workspaceContains:**/typo3_src",
     "workspaceContains:**/typo3conf/ext",
