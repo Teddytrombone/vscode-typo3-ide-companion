@@ -4,8 +4,10 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as net from 'net';
 import * as fs from 'fs';
+import { ChildProcess, spawn } from "child_process";
 
 let languageClient: LanguageClient;
+let languageServerProcess: ChildProcess;
 
 interface IdeCompanionConfig {
 	executablePath: string
@@ -82,49 +84,42 @@ export function activate(context: vscode.ExtensionContext) {
 		config.phpPath = '';
 	}
 
+	if (config.phpPath) {
+		config.launchServerArgs.unshift(config.executablePath);
+		config.executablePath = config.phpPath;
+	}
+
 	if (enable === false) {
 		return;
 	}
+
+	context.subscriptions.push(vscode.commands.registerCommand('vscode-typo3-ide-companion.reindex', reindex));
+	context.subscriptions.push(vscode.commands.registerCommand('vscode-typo3-ide-companion.restartServer', async () => {
+		await killServer();
+		languageClient = createClient(config, context);
+		languageClient.start();
+	}));
 
 	languageClient = createClient(config, context);
 	languageClient.start();
 }
 
 function getServerOptions(config: IdeCompanionConfig): ServerOptions {
-	let serverOptions;
 	if (!config.remote?.enabled) {
-		if (config.phpPath) {
-			config.launchServerArgs.unshift(config.executablePath);
-			config.executablePath = config.phpPath;
-		}
 		// launch language server via stdio
-		serverOptions = <ServerOptions>{
-			run: {
-				command: config.executablePath,
-				args: [...config.launchServerArgs],
-				options: {
-					env: {
-						...process.env,
-						TYPO3_CONTEXT: 'Development'
-					},
-				},
-			},
-			debug: {
-				command: config.executablePath,
-				args: ['-dxdebug.start_with_request=1', ...config.launchServerArgs],
-				options: {
-					env: {
-						...process.env,
-						TYPO3_CONTEXT: 'Development',
-						XDEBUG_MODE: 'debug',
-					},
-				},
-			},
+		return async (): Promise<ChildProcess> => {
+			languageServerProcess = spawn(config.executablePath, config.launchServerArgs, {
+				env: {
+					...process.env,
+					TYPO3_CONTEXT: 'Development'
+				}
+			});
+			return languageServerProcess;
 		};
 	} else {
 		// credits: https://github.com/itemis/xtext-languageserver-example/blob/master/vscode-extension/src/extension.ts
 		// launch language server via socket
-		serverOptions = () => {
+		return () => {
 			const { host, port } = config.remote;
 			const socket = net.connect({
 				host,
@@ -139,23 +134,21 @@ function getServerOptions(config: IdeCompanionConfig): ServerOptions {
 			return Promise.resolve(result);
 		};
 	}
-
-	return serverOptions;
 }
 
 function createClient(config: IdeCompanionConfig, context: vscode.ExtensionContext): LanguageClient {
 	const serverOptions = getServerOptions(config);
 
 	const clientOptions: LanguageClientOptions = {
+		// We hook on almost any file type and let the language server decide, if it will handle it
 		documentSelector: [
 			{ scheme: 'file' },
+			{ scheme: 'untitled' },
 		],
 		initializationOptions: config.config,
 	};
 
 	languageClient = new LanguageClient('typo3-ide-companion', 'TYPO3 ide companion', serverOptions, clientOptions);
-
-	context.subscriptions.push(vscode.commands.registerCommand('vscode-typo3-ide-companion.reindex', reindex));
 
 	return languageClient;
 }
@@ -233,5 +226,11 @@ function checkPlatform(): boolean {
 	return true;
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() { }
+async function killServer(): Promise<void> {
+	await languageClient.stop();
+	languageServerProcess.kill();
+}
+
+export function deactivate(): Thenable<void> | undefined {
+	return killServer();
+}

@@ -1,8 +1,8 @@
 {
   "name": "vscode-typo3-ide-companion",
-  "displayName": "vscode-typo3-ide-companion",
+  "displayName": "TYPO3 IDE companion",
   "description": "Connects to the TYPO3 extension ide_companion to use LSP functionality for your project",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "Teddytrombone",
   "engines": {
     "vscode": "^1.85.0"
@@ -38,11 +38,16 @@
       {
         "command": "vscode-typo3-ide-companion.reindex",
         "title": "Re-index workspace",
-        "category": "TYPO3 ide companion"
+        "category": "TYPO3 IDE companion"
+      },
+      {
+        "command": "vscode-typo3-ide-companion.restartServer",
+        "title": "Restart server",
+        "category": "TYPO3 IDE companion"
       }
     ],
     "configuration": {
-      "title": "TYPO3 ide_companion",
+      "title": "TYPO3 IDE companion",
       "properties": {
         "vscode-typo3-ide-companion.executablePath": {
           "type": [
