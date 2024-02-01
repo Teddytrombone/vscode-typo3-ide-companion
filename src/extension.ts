@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as net from 'net';
 import * as fs from 'fs';
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, spawn, execSync } from "child_process";
 
 let languageClient: LanguageClient;
 let languageServerProcess: ChildProcess;
@@ -40,6 +40,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const typo3RootPath = findTypo3Root();
 
+	let useTypo3Console = false;
+
 	if (!typo3RootPath) {
 		if (config.executablePath && !path.isAbsolute(config.executablePath)) {
 			console.log('TYPO3 root path not found - IDE companion not starting');
@@ -52,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	if (!config.executablePath && typo3RootPath) {
-		const useTypo3Console = defaultBinaryPaths.some(currentBinaryPath => {
+		useTypo3Console = defaultBinaryPaths.some(currentBinaryPath => {
 			const binaryPath = path.join(typo3RootPath, currentBinaryPath);
 			if (fs.existsSync(binaryPath)) {
 				config.executablePath = binaryPath;
@@ -80,14 +82,35 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// If our executable is the TYPO3 console command we should use the php binary
 	// If not, the executable has to be executable
-	if (!config.executablePath.endsWith('bin/typo3')) {
+	if (!useTypo3Console || !config.executablePath.endsWith('bin/typo3')) {
 		config.phpPath = '';
 	}
+
+	const possibleTypo3ExecutablePath = config.executablePath;
 
 	if (config.phpPath) {
 		config.launchServerArgs.unshift(config.executablePath);
 		config.executablePath = config.phpPath;
 	}
+	if (useTypo3Console) {
+		try {
+			let result = execSync(config.executablePath + ' ' + possibleTypo3ExecutablePath + ' list');
+			if (result.indexOf('idecompanion:lsp') === -1) {
+				console.log('Extension ide_companion doesn\'t seem to be installed');
+				console.log('IDE companion not starting');
+				return;
+			}
+		} catch (e) {
+			console.log('Error occured: ' + e);
+			console.log('IDE companion not starting');
+			return;
+		}
+
+	} else if (!isExec(config.executablePath)) {
+		console.log('The executable "' + config.executablePath + '" is not executable - IDE companion not starting');
+		return;
+	}
+
 
 	if (enable === false) {
 		return;
@@ -102,6 +125,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	languageClient = createClient(config, context);
 	languageClient.start();
+}
+
+function isExec(p: string) {
+	return !!(fs.statSync(p).mode & fs.constants.S_IXUSR);
 }
 
 function getServerOptions(config: IdeCompanionConfig): ServerOptions {
